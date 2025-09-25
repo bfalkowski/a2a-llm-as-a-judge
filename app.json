@@ -1,0 +1,9 @@
+{
+    "name": "A2A LLM-as-a-Judge Demo",
+    "description": "Self-contained A2A LLM-as-a-Judge agent (JSON-RPC) for content evaluation and quality assessment demos.",
+    "keywords": ["a2a", "json-rpc", "java", "llm", "evaluation", "judge"],
+    "formation": { "web": { "quantity": 1, "size": "eco" } },
+    "buildpacks": [{ "url": "heroku/java" }],
+    "success_url": "/agent/health"
+  }
+  

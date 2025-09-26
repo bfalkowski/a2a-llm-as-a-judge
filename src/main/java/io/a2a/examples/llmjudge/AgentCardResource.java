@@ -117,8 +117,8 @@ public class AgentCardResource {
             StringBuilder baseUrl = new StringBuilder();
             baseUrl.append(scheme).append("://").append(host);
             
-            // Only add port if it's not the default port
-            if ((scheme.equals("http") && port != 80) || (scheme.equals("https") && port != 443)) {
+            // Only add port if it's not the default port and not -1 (which means use default)
+            if (port != -1 && ((scheme.equals("http") && port != 80) || (scheme.equals("https") && port != 443))) {
                 baseUrl.append(":").append(port);
             }
             

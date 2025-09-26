@@ -1,3 +1,7 @@
-io/a2a/examples/llmjudge/AgentCardResource.class
+io/a2a/examples/llmjudge/RateLimitFilter$RateLimitInfo.class
 io/a2a/examples/llmjudge/JsonRpcResource.class
+io/a2a/examples/llmjudge/AgentCardResource.class
+io/a2a/examples/llmjudge/LLMService.class
+io/a2a/examples/llmjudge/SecurityFilter.class
+io/a2a/examples/llmjudge/RateLimitFilter.class
 io/a2a/examples/llmjudge/RootResource.class

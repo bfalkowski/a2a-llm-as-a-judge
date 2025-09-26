@@ -4,6 +4,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,13 +17,19 @@ import io.a2a.spec.AgentSkill;
 @Path("/agent")
 public class AgentCardResource {
 
+    @Inject
+    UriInfo uriInfo;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public AgentCard getAgentCard() {
+        // Get the base URL dynamically
+        String baseUrl = getBaseUrl();
+        
         return new AgentCard.Builder()
                 .name("LLM-as-a-Judge A2A Agent")
                 .description("An A2A agent that simulates LLM-as-a-judge evaluation capabilities for content quality assessment, factual accuracy checking, and relevance analysis")
-                .url("https://a2a-llm-judge-agent.herokuapp.com")
+                .url(baseUrl)
                 .version("1.0.0")
                 .documentationUrl("https://github.com/bfalkowski/a2a-llm-as-a-judge")
                 .capabilities(new AgentCapabilities.Builder()
@@ -96,5 +104,34 @@ public class AgentCardResource {
             "platform", "Heroku",
             "timestamp", System.currentTimeMillis()
         );
+    }
+
+    private String getBaseUrl() {
+        try {
+            // Get the base URL from the request
+            String scheme = uriInfo.getRequestUri().getScheme();
+            String host = uriInfo.getRequestUri().getHost();
+            int port = uriInfo.getRequestUri().getPort();
+            
+            // Build the base URL
+            StringBuilder baseUrl = new StringBuilder();
+            baseUrl.append(scheme).append("://").append(host);
+            
+            // Only add port if it's not the default port
+            if ((scheme.equals("http") && port != 80) || (scheme.equals("https") && port != 443)) {
+                baseUrl.append(":").append(port);
+            }
+            
+            return baseUrl.toString();
+        } catch (Exception e) {
+            // Fallback to environment variable or default
+            String herokuUrl = System.getenv("HEROKU_APP_NAME");
+            if (herokuUrl != null && !herokuUrl.isEmpty()) {
+                return "https://" + herokuUrl + ".herokuapp.com";
+            }
+            
+            // Final fallback
+            return "https://a2a-llm-judge-agent.herokuapp.com";
+        }
     }
 }

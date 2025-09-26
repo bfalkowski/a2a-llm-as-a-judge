@@ -5,6 +5,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +15,12 @@ import java.util.Random;
 
 @Path("/jsonrpc")
 public class JsonRpcResource {
+
+    @Inject
+    LLMService llmService;
+
+    @Inject
+    UriInfo uriInfo;
 
     private final Random random = new Random();
 
@@ -52,7 +60,7 @@ public class JsonRpcResource {
                     "name", "LLM-as-a-Judge A2A Agent",
                     "description", "An A2A agent that simulates LLM-as-a-judge evaluation capabilities for content quality assessment, factual accuracy checking, and relevance analysis",
                     "version", "1.0.0",
-                    "url", "https://a2a-llm-judge-agent.herokuapp.com",
+                    "url", getBaseUrl(),
                     "protocolVersion", "0.3.0"
                 );
                 break;
@@ -117,7 +125,8 @@ public class JsonRpcResource {
                     "status", "UP",
                     "uptime", "running",
                     "lastHealthCheck", System.currentTimeMillis(),
-                    "activeConnections", 0
+                    "activeConnections", 0,
+                    "evaluationMode", llmService != null && llmService.isConfigured() ? "LLM" : "MOCK"
                 );
                 break;
             // LLM-as-a-Judge Evaluation Methods
@@ -176,20 +185,40 @@ public class JsonRpcResource {
             );
         }
 
-        // Mock evaluation logic based on response quality
-        double overallScore = calculateResponseScore(prompt, response);
-        Map<String, Double> criteriaScores = calculateCriteriaScores(prompt, response, criteriaObj);
-        String feedback = generateFeedback(prompt, response, overallScore);
-        List<String> strengths = generateStrengths(response);
-        List<String> improvements = generateImprovements(response);
+        // Convert criteria to List<String>
+        List<String> criteria = new ArrayList<>();
+        if (criteriaObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> criteriaList = (List<Object>) criteriaObj;
+            for (Object criterion : criteriaList) {
+                if (criterion instanceof String) {
+                    criteria.add((String) criterion);
+                }
+            }
+        }
+        if (criteria.isEmpty()) {
+            criteria = List.of("accuracy", "clarity", "relevance", "completeness");
+        }
 
-        return Map.of(
-            "overall_score", overallScore,
-            "criteria_scores", criteriaScores,
-            "feedback", feedback,
-            "strengths", strengths,
-            "areas_for_improvement", improvements
-        );
+        // Try LLM first, fall back to mock
+        if (llmService != null && llmService.isConfigured()) {
+            return llmService.evaluateResponse(prompt, response, criteria);
+        } else {
+            // Mock evaluation logic
+            double overallScore = calculateResponseScore(prompt, response);
+            Map<String, Double> criteriaScores = calculateCriteriaScores(prompt, response, criteriaObj);
+            String feedback = generateFeedback(prompt, response, overallScore);
+            List<String> strengths = generateStrengths(response);
+            List<String> improvements = generateImprovements(response);
+
+            return Map.of(
+                "overall_score", overallScore,
+                "criteria_scores", criteriaScores,
+                "feedback", feedback,
+                "strengths", strengths,
+                "areas_for_improvement", improvements
+            );
+        }
     }
 
     private Map<String, Object> scoreQuality(Object params) {
@@ -207,17 +236,38 @@ public class JsonRpcResource {
             return Map.of("error", "Invalid input: content cannot be empty");
         }
 
-        double overallScore = calculateContentScore(content, contentType);
-        Map<String, Double> dimensionScores = calculateDimensionScores(content, contentType, dimensionsObj);
-        String analysis = generateContentAnalysis(content, contentType, overallScore);
-        List<String> suggestions = generateContentSuggestions(content, contentType);
+        // Convert dimensions to List<String>
+        List<String> dimensions = new ArrayList<>();
+        if (dimensionsObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> dimensionsList = (List<Object>) dimensionsObj;
+            for (Object dimension : dimensionsList) {
+                if (dimension instanceof String) {
+                    dimensions.add((String) dimension);
+                }
+            }
+        }
+        if (dimensions.isEmpty()) {
+            dimensions = List.of("clarity", "completeness", "accuracy", "usability");
+        }
 
-        return Map.of(
-            "overall_score", overallScore,
-            "dimension_scores", dimensionScores,
-            "analysis", analysis,
-            "suggestions", suggestions
-        );
+        // Try LLM first, fall back to mock
+        if (llmService != null && llmService.isConfigured()) {
+            return llmService.scoreQuality(content, contentType, dimensions);
+        } else {
+            // Mock evaluation logic
+            double overallScore = calculateContentScore(content, contentType);
+            Map<String, Double> dimensionScores = calculateDimensionScores(content, contentType, dimensionsObj);
+            String analysis = generateContentAnalysis(content, contentType, overallScore);
+            List<String> suggestions = generateContentSuggestions(content, contentType);
+
+            return Map.of(
+                "overall_score", overallScore,
+                "dimension_scores", dimensionScores,
+                "analysis", analysis,
+                "suggestions", suggestions
+            );
+        }
     }
 
     private Map<String, Object> checkFactualAccuracy(Object params) {
@@ -235,21 +285,27 @@ public class JsonRpcResource {
             return Map.of("error", "Invalid input: claim cannot be empty");
         }
 
-        double accuracyScore = calculateFactualAccuracy(claim, domain);
-        String verificationStatus = determineVerificationStatus(accuracyScore);
-        double confidence = calculateConfidence(accuracyScore);
-        String analysis = generateFactualAnalysis(claim, domain, accuracyScore);
-        List<String> evidence = generateSupportingEvidence(claim, domain);
-        List<String> caveats = generateCaveats(claim, domain);
+        // Try LLM first, fall back to mock
+        if (llmService != null && llmService.isConfigured()) {
+            return llmService.checkFactualAccuracy(claim, domain, verificationLevel);
+        } else {
+            // Mock evaluation logic
+            double accuracyScore = calculateFactualAccuracy(claim, domain);
+            String verificationStatus = determineVerificationStatus(accuracyScore);
+            double confidence = calculateConfidence(accuracyScore);
+            String analysis = generateFactualAnalysis(claim, domain, accuracyScore);
+            List<String> evidence = generateSupportingEvidence(claim, domain);
+            List<String> caveats = generateCaveats(claim, domain);
 
-        return Map.of(
-            "accuracy_score", accuracyScore,
-            "verification_status", verificationStatus,
-            "confidence", confidence,
-            "analysis", analysis,
-            "supporting_evidence", evidence,
-            "caveats", caveats
-        );
+            return Map.of(
+                "accuracy_score", accuracyScore,
+                "verification_status", verificationStatus,
+                "confidence", confidence,
+                "analysis", analysis,
+                "supporting_evidence", evidence,
+                "caveats", caveats
+            );
+        }
     }
 
     private Map<String, Object> assessRelevance(Object params) {
@@ -267,19 +323,26 @@ public class JsonRpcResource {
             return Map.of("error", "Invalid input: query and response cannot be empty");
         }
 
-        double relevanceScore = calculateRelevanceScore(query, response, context);
-        String relevanceLevel = determineRelevanceLevel(relevanceScore);
-        String analysis = generateRelevanceAnalysis(query, response, relevanceScore);
-        List<String> matchingElements = generateMatchingElements(query, response);
-        List<String> missingElements = generateMissingElements(query, response);
+        // Try LLM first, fall back to mock
+        if (llmService != null && llmService.isConfigured()) {
+            // For now, use mock for relevance - you can add this to LLMService later
+            return getMockRelevanceAssessment(query, response, context);
+        } else {
+            // Mock evaluation logic
+            double relevanceScore = calculateRelevanceScore(query, response, context);
+            String relevanceLevel = determineRelevanceLevel(relevanceScore);
+            String analysis = generateRelevanceAnalysis(query, response, relevanceScore);
+            List<String> matchingElements = generateMatchingElements(query, response);
+            List<String> missingElements = generateMissingElements(query, response);
 
-        return Map.of(
-            "relevance_score", relevanceScore,
-            "relevance_level", relevanceLevel,
-            "analysis", analysis,
-            "matching_elements", matchingElements,
-            "missing_elements", missingElements
-        );
+            return Map.of(
+                "relevance_score", relevanceScore,
+                "relevance_level", relevanceLevel,
+                "analysis", analysis,
+                "matching_elements", matchingElements,
+                "missing_elements", missingElements
+            );
+        }
     }
 
     private Map<String, Object> compareResponses(Object params) {
@@ -618,5 +681,51 @@ public class JsonRpcResource {
         recommendations.add("Focus on improving clarity and detail in lower-scoring responses");
         recommendations.add("Consider incorporating strengths from the winning response");
         return recommendations;
+    }
+
+    // Mock method for relevance assessment when LLM is configured
+    private Map<String, Object> getMockRelevanceAssessment(String query, String response, String context) {
+        double relevanceScore = calculateRelevanceScore(query, response, context);
+        String relevanceLevel = determineRelevanceLevel(relevanceScore);
+        String analysis = generateRelevanceAnalysis(query, response, relevanceScore);
+        List<String> matchingElements = generateMatchingElements(query, response);
+        List<String> missingElements = generateMissingElements(query, response);
+
+        return Map.of(
+            "relevance_score", relevanceScore,
+            "relevance_level", relevanceLevel,
+            "analysis", analysis,
+            "matching_elements", matchingElements,
+            "missing_elements", missingElements
+        );
+    }
+
+    private String getBaseUrl() {
+        try {
+            // Get the base URL from the request
+            String scheme = uriInfo.getRequestUri().getScheme();
+            String host = uriInfo.getRequestUri().getHost();
+            int port = uriInfo.getRequestUri().getPort();
+            
+            // Build the base URL
+            StringBuilder baseUrl = new StringBuilder();
+            baseUrl.append(scheme).append("://").append(host);
+            
+            // Only add port if it's not the default port
+            if ((scheme.equals("http") && port != 80) || (scheme.equals("https") && port != 443)) {
+                baseUrl.append(":").append(port);
+            }
+            
+            return baseUrl.toString();
+        } catch (Exception e) {
+            // Fallback to environment variable or default
+            String herokuUrl = System.getenv("HEROKU_APP_NAME");
+            if (herokuUrl != null && !herokuUrl.isEmpty()) {
+                return "https://" + herokuUrl + ".herokuapp.com";
+            }
+            
+            // Final fallback
+            return "https://a2a-llm-judge-agent.herokuapp.com";
+        }
     }
 }

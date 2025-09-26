@@ -1,3 +1,6 @@
 /Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/JsonRpcResource.java
+/Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/LLMService.java
 /Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/AgentCardResource.java
+/Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/SecurityFilter.java
+/Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/RateLimitFilter.java
 /Users/bryanfalkowski/Projects/a2a-llm-as-a-judge/src/main/java/io/a2a/examples/llmjudge/RootResource.java

@@ -23,22 +23,22 @@ public class LLMService {
 
     private static final Logger log = Logger.getLogger(LLMService.class);
 
-    @ConfigProperty(name = "llm.api.key")
+    @ConfigProperty(name = "llm.api.key", defaultValue = "")
     String apiKey;
 
-    @ConfigProperty(name = "llm.api.url")
+    @ConfigProperty(name = "llm.api.url", defaultValue = "https://api.openai.com/v1/chat/completions")
     String apiUrl;
 
-    @ConfigProperty(name = "llm.model")
+    @ConfigProperty(name = "llm.model", defaultValue = "gpt-4")
     String model;
 
-    @ConfigProperty(name = "llm.temperature")
+    @ConfigProperty(name = "llm.temperature", defaultValue = "0.3")
     double temperature;
 
-    @ConfigProperty(name = "llm.max.tokens")
+    @ConfigProperty(name = "llm.max.tokens", defaultValue = "1000")
     int maxTokens;
 
-    @ConfigProperty(name = "llm.timeout")
+    @ConfigProperty(name = "llm.timeout", defaultValue = "30")
     int timeoutSeconds;
 
     private final ObjectMapper objectMapper = new ObjectMapper();

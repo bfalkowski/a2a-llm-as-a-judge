@@ -17,14 +17,15 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @ApplicationScoped
 public class LLMService {
 
     private static final Logger log = Logger.getLogger(LLMService.class);
 
-    @ConfigProperty(name = "llm.api.key", defaultValue = "not-set")
-    String apiKey;
+    @ConfigProperty(name = "llm.api.key")
+    Optional<String> apiKey;
 
     @ConfigProperty(name = "llm.api.url", defaultValue = "https://api.openai.com/v1/chat/completions")
     String apiUrl;
@@ -44,7 +45,7 @@ public class LLMService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equals("not-set");
+        return apiKey.isPresent() && !apiKey.get().trim().isEmpty();
     }
 
     public Map<String, Object> evaluateResponse(String prompt, String response, List<String> criteria) {

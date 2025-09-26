@@ -5,6 +5,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import java.util.Optional;
 import org.jboss.logging.Logger;
 
 @Provider
@@ -12,8 +13,8 @@ public class SecurityFilter implements ContainerRequestFilter {
 
     private static final Logger log = Logger.getLogger(SecurityFilter.class);
 
-    @ConfigProperty(name = "agent.api.key", defaultValue = "not-set")
-    String agentApiKey;
+    @ConfigProperty(name = "agent.api.key")
+    Optional<String> agentApiKey;
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
@@ -28,12 +29,12 @@ public class SecurityFilter implements ContainerRequestFilter {
         if (path.equals("jsonrpc")) {
             String providedKey = requestContext.getHeaderString("X-API-Key");
             
-            if (agentApiKey.isEmpty() || agentApiKey.equals("not-set")) {
+            if (!agentApiKey.isPresent() || agentApiKey.get().isEmpty()) {
                 log.warn("No API key configured - allowing all requests");
                 return;
             }
             
-            if (providedKey == null || !providedKey.equals(agentApiKey)) {
+            if (providedKey == null || !providedKey.equals(agentApiKey.get())) {
                 log.warn("Unauthorized request from IP: " + getClientIP(requestContext));
                 requestContext.abortWith(
                     Response.status(401)

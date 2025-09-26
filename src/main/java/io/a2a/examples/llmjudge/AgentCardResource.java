@@ -113,6 +113,11 @@ public class AgentCardResource {
             String host = uriInfo.getRequestUri().getHost();
             int port = uriInfo.getRequestUri().getPort();
             
+            // Force HTTPS on Heroku
+            if (host != null && host.endsWith(".herokuapp.com")) {
+                return "https://" + host;
+            }
+            
             // Build the base URL
             StringBuilder baseUrl = new StringBuilder();
             baseUrl.append(scheme).append("://").append(host);

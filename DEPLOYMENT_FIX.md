@@ -2,14 +2,14 @@
 
 ## Issue: App Crashes on Heroku
 
-The app was crashing due to missing default values in `@ConfigProperty` annotations.
+The app was crashing due to empty string default values in `@ConfigProperty` annotations. Quarkus doesn't like empty string defaults.
 
 ## ✅ Fixed
 
-I've added default values to all configuration properties in `LLMService.java`:
+I've changed empty string defaults to meaningful values in both `LLMService.java` and `SecurityFilter.java`:
 
 ```java
-@ConfigProperty(name = "llm.api.key", defaultValue = "")
+@ConfigProperty(name = "llm.api.key", defaultValue = "not-set")
 String apiKey;
 
 @ConfigProperty(name = "llm.api.url", defaultValue = "https://api.openai.com/v1/chat/completions")
@@ -26,6 +26,10 @@ int maxTokens;
 
 @ConfigProperty(name = "llm.timeout", defaultValue = "30")
 int timeoutSeconds;
+
+// And in SecurityFilter.java:
+@ConfigProperty(name = "agent.api.key", defaultValue = "not-set")
+String agentApiKey;
 ```
 
 ## 🚀 Deploy the Fix
@@ -34,7 +38,7 @@ int timeoutSeconds;
 ```bash
 # Deploy the fixed version
 git add .
-git commit -m "Fix configuration injection with default values"
+git commit -m "Fix empty string config defaults - use 'not-set' instead"
 git push heroku main
 ```
 

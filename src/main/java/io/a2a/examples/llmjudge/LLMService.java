@@ -23,7 +23,7 @@ public class LLMService {
 
     private static final Logger log = Logger.getLogger(LLMService.class);
 
-    @ConfigProperty(name = "llm.api.key", defaultValue = "")
+    @ConfigProperty(name = "llm.api.key", defaultValue = "not-set")
     String apiKey;
 
     @ConfigProperty(name = "llm.api.url", defaultValue = "https://api.openai.com/v1/chat/completions")
@@ -44,7 +44,7 @@ public class LLMService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.trim().isEmpty();
+        return apiKey != null && !apiKey.trim().isEmpty() && !apiKey.equals("not-set");
     }
 
     public Map<String, Object> evaluateResponse(String prompt, String response, List<String> criteria) {

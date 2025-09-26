@@ -12,7 +12,7 @@ public class SecurityFilter implements ContainerRequestFilter {
 
     private static final Logger log = Logger.getLogger(SecurityFilter.class);
 
-    @ConfigProperty(name = "agent.api.key", defaultValue = "")
+    @ConfigProperty(name = "agent.api.key", defaultValue = "not-set")
     String agentApiKey;
 
     @Override
@@ -28,7 +28,7 @@ public class SecurityFilter implements ContainerRequestFilter {
         if (path.equals("jsonrpc")) {
             String providedKey = requestContext.getHeaderString("X-API-Key");
             
-            if (agentApiKey.isEmpty()) {
+            if (agentApiKey.isEmpty() || agentApiKey.equals("not-set")) {
                 log.warn("No API key configured - allowing all requests");
                 return;
             }
